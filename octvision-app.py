@@ -35,29 +35,30 @@ if api_key:
         if st.button("🔍 Phân tích OCT"):
             with st.spinner("Đang phân tích báo cáo OCT..."):
                 try:
-                    prompt = """Bạn là chuyên gia nhãn khoa với 20 năm kinh nghiệm, chuyên phân tích OCT cho bệnh glaucoma và võng mạc. Hãy phân tích hình ảnh OCT đính kèm theo các bước sau (Chain of Thought):
+                    prompt = """Bạn là chuyên gia nhãn khoa với 20 năm kinh nghiệm, chuyên OCT glaucoma và võng mạc. Phân tích hình OCT đính kèm theo Chain of Thought (nghĩ từng bước):
 
-1. **Quan sát tổng quát**: Mô tả loại OCT (e.g., RNFL, GCC, Macula, Disc) và chất lượng hình (signal strength, artifact nếu có).
+1. **Bước 1: Quan sát tổng quát**: Xác định loại scan (RNFL, GCC, Macula, Disc), chất lượng (signal strength ước tính nếu không có, artifact như blur/noise).
 
-2. **Trích xuất thông số chính**: Đọc chính xác từ hình, không đoán:
-   - RNFL thickness: Average, Temporal, Superior, Nasal, Inferior (μm, với color code xanh/vàng/đỏ).
-   - GCC/GCIPL thickness: Average, sectors (Superior, Inferior, etc.) (μm).
-   - ONH parameters: Cup/Disc ratio (horizontal/vertical), Rim area, Disc area.
-   - Khác: Signal strength/Quality (e.g., 8/10), Asymmetry giữa hai mắt nếu có.
+2. **Bước 2: Trích xuất thông số chính**: Đọc chính xác từ hình nếu có số; nếu không, ước tính dựa trên hình thái (e.g., thickness ~300μm nếu thickening). Bao gồm:
+   - RNFL: Average + quadrants (μm, color: xanh bình thường, vàng borderline, đỏ bất thường).
+   - GCC/GCIPL: Average + sectors.
+   - ONH: C/D ratio, rim/disc area.
+   - Signal/Quality: Số hoặc ước tính.
+   - Color coding: Mô tả vùng xanh/vàng/đỏ/đen (fluid).
 
-3. **Phân tích chẩn đoán**:
-   - Có dấu hiệu glaucoma? (Thinning RNFL/GCC <5th percentile, focal loss, asymmetry >10μm). Nếu có, mức độ: Mild (RNFL avg >80μm), Moderate (60-80μm), Severe (<60μm).
-   - Các tổn thương khác: AMD (drusen, RPE irregularity), DME (cystoid edema), Macular hole (full-thickness defect), ERM (membrane hyperreflective), v.v. Lý do từng dấu hiệu.
-   - Tương quan: So sánh với norm database trong hình (e.g., below normal in red areas).
+3. **Bước 3: Phân tích chẩn đoán**: Lý do từng bước.
+   - Glaucoma: Thinning RNFL/GCC <5th percentile, asymmetry >10μm, focal loss – mức độ mild/moderate/severe dựa trên RNFL avg (>80/60-80/<60μm).
+   - Khác: CSR (SRF dome-shaped), CME (cystoid spaces), AMD (drusen/RPE irregularity), Macular hole (break layers), ERM (hyperreflective membrane), etc.
 
-4. **Tóm tắt ngắn gọn**: 1-2 câu chính, e.g., "OCT cho thấy thinning RNFL superior, nghi glaucoma moderate ở mắt phải."
+4. **Bước 4: Tóm tắt ngắn gọn**: 1-2 câu chính.
 
-5. **Đề xuất**:
-   - Cận lâm sàng tiếp theo: VF Humphrey nếu nghi glaucoma, Fundus photo/FA nếu nghi AMD, Pachymetry đo CCT, Gonioscopy kiểm góc, MRI nếu nghi optic neuropathy.
-   - Phác đồ điều trị gợi ý: Nếu glaucoma mild - theo dõi IOP + thuốc nhỏ prostaglandin (e.g., Latanoprost qhs); moderate - laser SLT; severe - phẫu thuật trabeculectomy. Nếu khác, tham khảo chuyên khoa (e.g., tiêm anti-VEGF cho DME).
+5. **Bước 5: Đề xuất**:
+   - Cận lâm sàng: VF cho glaucoma, FA cho CSR/AMD, MRI nếu nghi u.
+   - Phác đồ: Glaucoma – thuốc IOP (prostaglandin qhs); CSR – theo dõi/PDT; CME – anti-VEGF/steroid.
 
-Lưu ý: Chỉ dựa vào hình ảnh, không thêm giả định. Kết quả tham khảo, khuyến nghị khám bác sĩ nhãn khoa ngay.
-Output theo định dạng Markdown rõ ràng, dùng bullet points cho từng phần."""
+Lưu ý: Nếu hình raw (không số), ước tính dựa trên hình thái học. Chỉ dựa vào hình, không đoán ngoài. Kết quả tham khảo, khám bác sĩ ngay.
+
+Output Markdown: Sử dụng headings cho từng bước, bullet cho thông số."""
                     response = model.generate_content([prompt] + images)
                     st.subheader("📋 Kết quả phân tích OCT")
                     st.markdown(response.text)
