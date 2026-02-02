@@ -39,4 +39,17 @@ if api_key:
                     3. **Tóm tắt ngắn gọn** (1-2 câu): Tình trạng chính là gì?
 
                     4. **Đề xuất**:
-                       - Cận lâm sàng cần làm tiếp theo (VF,
+                       - Cận lâm sàng cần làm tiếp theo (VF, pachymetry, gonioscopy, fundus photo, FA, MRI...).
+                       - Hướng điều trị / phác đồ gợi ý (theo giai đoạn nếu là glaucoma).
+
+                    Lưu ý: Đây chỉ là hỗ trợ, không thay thế chẩn đoán bác sĩ.
+                    """
+
+                    response = model.generate_content([prompt] + images)
+                    st.subheader("📋 Kết quả phân tích OCT")
+                    st.markdown(response.text)
+                    st.caption("App phân tích OCT - BSCK2 Lê Hồng Hà")
+                except Exception as e:
+                    st.error(f"Lỗi API: {str(e)}")
+else:
+    st.warning("Vui lòng thêm GEMINI_API_KEY vào Secrets")
