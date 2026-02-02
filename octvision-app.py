@@ -2,72 +2,78 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Cấu hình trang web
-st.set_page_config(page_title="AI OCT Analyzer - Dr. Hong Ha", layout="centered")
-st.title("🛠️ AI OCT Analyzer - Dr. Hong Ha")
+# 1. Cấu hình giao diện và thương hiệu
+st.set_page_config(page_title="AI OCT Analyzer - Dr. Hong Ha", layout="wide")
+st.title("👁️ AI OCT Analyzer - BSCK2 Lê Hồng Hà")
+st.markdown("---")
 
-# 2. Lấy API Key từ Secrets
+# 2. Quản lý API Key bảo mật
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if api_key:
     try:
+        # Cấu hình Google Generative AI
         genai.configure(api_key=api_key)
-        # Sử dụng model flash-latest để ổn định
-        model = genai.GenerativeModel("gemini-1.5-flash-latest")
+        
+        # Khai báo model (Dùng định danh chuẩn để tránh lỗi 404)
+        model = genai.GenerativeModel(model_name="models/gemini-1.5-flash")
 
+        # Giao diện tải file
         uploaded_files = st.file_uploader(
-            "Tải ảnh báo cáo OCT lên (Cirrus, Spectralis, Topcon, Avanti...)", 
+            "Tải ảnh báo cáo OCT (RNFL, GCC, Macula, Disc...)", 
             type=["jpg", "jpeg", "png"], 
             accept_multiple_files=True
         )
 
         if uploaded_files:
             images = []
-            for uploaded_file in uploaded_files:
+            cols = st.columns(len(uploaded_files))
+            for idx, uploaded_file in enumerate(uploaded_files):
                 image = Image.open(uploaded_file)
                 images.append(image)
-                st.image(image, caption=f"Ảnh OCT: {uploaded_file.name}", use_container_width=True)
+                with cols[idx]:
+                    st.image(image, caption=f"Ảnh: {uploaded_file.name}", use_container_width=True)
 
-            if st.button("🔍 Phân tích OCT"):
-                with st.spinner("Đang phân tích báo cáo OCT..."):
+            if st.button("🚀 Bắt đầu Phân tích Chuyên sâu"):
+                with st.spinner("Bác sĩ vui lòng đợi trong giây lát, AI đang phân tích dữ liệu OCT..."):
                     try:
-                        # NỘI DUNG PROMPT (Đã sửa lỗi thụt lề và đóng ngoặc)
-                        prompt = """Bạn là chuyên gia nhãn khoa với 20 năm kinh nghiệm, chuyên phân tích OCT cho bệnh glaucoma và võng mạc. Hãy phân tích hình ảnh OCT đính kèm theo các bước sau (Chain of Thought):
+                        # PROMPT TỐI ƯU HÓA CHUYÊN GIA (Chain of Thought)
+                        prompt = """Bạn là chuyên gia nhãn khoa với 20 năm kinh nghiệm, chuyên phân tích OCT cho bệnh glaucoma và võng mạc. 
+                        Hãy phân tích hình ảnh OCT đính kèm theo các bước sau:
 
-1. **Quan sát tổng quát**: Mô tả loại OCT (e.g., RNFL, GCC, Macula, Disc) và chất lượng hình (signal strength, artifact nếu có).
+                        1. **Quan sát tổng quát**: Mô tả loại OCT (e.g., RNFL, GCC, Macula, Disc) và chất lượng hình (signal strength, artifact nếu có).
+                        2. **Trích xuất thông số chính**: Đọc chính xác từ hình, không đoán:
+                           - RNFL thickness: Average, Temporal, Superior, Nasal, Inferior (μm, kèm mã màu xanh/vàng/đỏ nếu thấy).
+                           - GCC/GCIPL thickness: Average, các phân vùng (μm).
+                           - ONH parameters: Cup/Disc ratio (H/V), Rim area, Disc area.
+                           - Đối chiếu: Signal strength, Asymmetry giữa hai mắt.
+                        3. **Phân tích chẩn đoán**:
+                           - Dấu hiệu glaucoma? (Thinning RNFL/GCC <5th percentile, focal loss, asymmetry >10μm). 
+                           - Phân loại mức độ: Mild (RNFL avg >80μm), Moderate (60-80μm), Severe (<60μm).
+                           - Các tổn thương khác: AMD (drusen, RPE), DME (cystoid edema), Macular hole, ERM. Lý do dựa trên hình ảnh.
+                        4. **Tóm tắt chuyên môn**: 1-2 câu ngắn gọn kết luận tình trạng chính.
+                        5. **Đề xuất lâm sàng**:
+                           - Cận lâm sàng: VF Humphrey, Fundus photo, Pachymetry, Gonioscopy.
+                           - Hướng điều trị gợi ý: Thuốc (Prostaglandin), Laser (SLT), hay Phẫu thuật (Trabeculectomy).
 
-2. **Trích xuất thông số chính**: Đọc chính xác từ hình, không đoán:
-   - RNFL thickness: Average, Temporal, Superior, Nasal, Inferior (μm, với color code xanh/vàng/đỏ).
-   - GCC/GCIPL thickness: Average, sectors (Superior, Inferior, etc.) (μm).
-   - ONH parameters: Cup/Disc ratio (horizontal/vertical), Rim area, Disc area.
-   - Khác: Signal strength/Quality (e.g., 8/10), Asymmetry giữa hai mắt nếu có.
+                        Lưu ý: Chỉ dựa vào hình ảnh cung cấp. Kết quả mang tính chất tham khảo y khoa.
+                        Định dạng Output: Markdown chuyên nghiệp, dùng bullet points."""
 
-3. **Phân tích chẩn đoán**:
-   - Có dấu hiệu glaucoma? (Thinning RNFL/GCC <5th percentile, focal loss, asymmetry >10μm). Nếu có, mức độ: Mild (RNFL avg >80μm), Moderate (60-80μm), Severe (<60μm).
-   - Các tổn thương khác: AMD (drusen, RPE irregularity), DME (cystoid edema), Macular hole (full-thickness defect), ERM (membrane hyperreflective), v.v. Lý do từng dấu hiệu.
-   - Tương quan: So sánh với norm database trong hình (e.g., below normal in red areas).
-
-4. **Tóm tắt ngắn gọn**: 1-2 câu chính, e.g., "OCT cho thấy thinning RNFL superior, nghi glaucoma moderate ở mắt phải."
-
-5. **Đề xuất**:
-   - Cận lâm sàng tiếp theo: VF Humphrey nếu nghi glaucoma, Fundus photo/FA nếu nghi AMD, Pachymetry đo CCT, Gonioscopy kiểm góc, MRI nếu nghi optic neuropathy.
-   - Phác đồ điều trị gợi ý: Nếu glaucoma mild - theo dõi IOP + thuốc nhỏ prostaglandin (e.g., Latanoprost qhs); moderate - laser SLT; severe - phẫu thuật trabeculectomy. Nếu khác, tham khảo chuyên khoa (e.g., tiêm anti-VEGF cho DME).
-
-Lưu ý: Chỉ dựa vào hình ảnh, không thêm giả định. Kết quả tham khảo, khuyến nghị khám bác sĩ nhãn khoa ngay.
-Output theo định dạng Markdown rõ ràng, dùng bullet points cho từng phần."""
-
-                        # Gọi API gửi cả prompt và danh sách ảnh
+                        # Gọi API với cấu hình ổn định nhất
                         response = model.generate_content([prompt] + images)
                         
-                        st.subheader("📋 Kết quả phân tích OCT")
+                        # Hiển thị kết quả
+                        st.success("Phân tích hoàn tất!")
                         st.markdown(response.text)
                         
-                        st.divider()
-                        st.info("App phân tích OCT - BSCK2 Lê Hồng Hà")
+                        # Chữ ký thương hiệu
+                        st.markdown("---")
+                        st.info("💡 **App phân tích thị trường - BSCK2 Lê Hồng Hà**")
                         
                     except Exception as e:
                         st.error(f"Lỗi khi xử lý dữ liệu: {str(e)}")
+                        st.info("Mẹo: Hãy thử nhấn 'Reboot App' trong bảng điều khiển Streamlit.")
     except Exception as e:
-        st.error(f"Lỗi cấu hình hệ thống: {str(e)}")
+        st.error(f"Lỗi hệ thống: {str(e)}")
 else:
-    st.warning("Vui lòng thêm GEMINI_API_KEY vào Secrets của Streamlit Cloud để bắt đầu.")
+    st.warning("⚠️ Chưa tìm thấy API Key. Bác sĩ hãy dán 'GEMINI_API_KEY' vào mục Settings > Secrets của Streamlit.")
