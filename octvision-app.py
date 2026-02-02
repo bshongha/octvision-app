@@ -12,18 +12,19 @@ api_key = st.secrets.get("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
     
+    # Debug: List models khả dụng để xem và chọn đúng
     try:
         models = genai.list_models()
         available_models = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
-
-# Sửa model name: Bỏ 'models/', dùng model mới
-        model = genai.GenerativeModel("gemini-2.5-flash")  # Hoặc "gemini-2.5-flash-latest" nếu cần bản mới nhất
-        
-        uploaded_file = st.file_uploader("Chọn hình ảnh báo cáo...", type=["jpg", "jpeg", "png"])
-        if uploaded_file is not None:
-            image = Image.open(uploaded_file)
-            st.image(image, caption='Ảnh đã tải lên', use_container_width=True)
+        st.write("Models khả dụng (debug):")
+        st.write(available_models)
+    except Exception as e:
+        st.warning(f"Lỗi list models: {str(e)}")
     
+    # Sửa model name: Dùng model phù hợp nhất từ debug (ở đây dùng 'gemini-1.5-pro' an toàn, thay nếu cần từ list)
+    model = genai.GenerativeModel("gemini-1.5-pro")  # Hoặc chọn từ available_models, ví dụ "gemini-1.5-flash-latest" nếu có
+    
+    # Gộp uploader thành multiple để linh hoạt (bỏ uploader đơn lẻ để tránh trùng lặp)
     uploaded_files = st.file_uploader("Tải ảnh báo cáo OCT lên (Cirrus, Spectralis, Topcon, Avanti...)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
     
     if uploaded_files:
