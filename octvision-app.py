@@ -8,13 +8,12 @@ st.title("🛠️ GlaucoVision OCT Analyzer")
 api_key = st.secrets.get("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")  # Sửa thành model đúng (flash nhanh, hỗ trợ image)
+    model = genai.GenerativeModel("gemini-1.5-flash-latest")  # Sửa thành alias latest để tránh 404
 
-    # Hỗ trợ up nhiều ảnh nếu cần (nếu chỉ up 1, dùng file_uploader với multiple=False)
     uploaded_files = st.file_uploader("Tải ảnh báo cáo OCT lên (Cirrus, Spectralis, Topcon, Avanti...)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
     if uploaded_files:
-        images = []  # List để lưu nhiều ảnh
+        images = []
         for uploaded_file in uploaded_files:
             image = Image.open(uploaded_file)
             images.append(image)
@@ -40,18 +39,4 @@ if api_key:
                     3. **Tóm tắt ngắn gọn** (1-2 câu): Tình trạng chính là gì?
 
                     4. **Đề xuất**:
-                       - Cận lâm sàng cần làm tiếp theo (VF, pachymetry, gonioscopy, fundus photo, FA, MRI...).
-                       - Hướng điều trị / phác đồ gợi ý (theo giai đoạn nếu là glaucoma).
-
-                    Lưu ý: Đây chỉ là hỗ trợ, không thay thế chẩn đoán bác sĩ.
-                    """
-
-                    # Gọi với prompt + list images (nếu nhiều ảnh, nó sẽ phân tích chung)
-                    response = model.generate_content([prompt] + images)
-                    st.subheader("📋 Kết quả phân tích OCT")
-                    st.markdown(response.text)
-                    st.caption("App phân tích OCT - BSCK2 Lê Hồng Hà")
-                except Exception as e:
-                    st.error(f"Lỗi API: {str(e)}")  # In lỗi chi tiết để debug
-else:
-    st.warning("Vui lòng thêm GEMINI_API_KEY vào Secrets")
+                       - Cận lâm sàng cần làm tiếp theo (VF,
