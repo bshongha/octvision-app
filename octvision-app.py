@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-st.set_page_config(page_title="OCT Analyzer", layout="centered")
+st.set_page_config(page_title="OCT Analyzer AI", layout="centered")
 st.title("🛠️ OCT Analyzer - Hong Ha. MD")
 
 # Debug: Kiểm tra nếu secrets có load OK
@@ -15,11 +15,7 @@ if api_key:
     try:
         models = genai.list_models()
         available_models = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
-        st.write("Models khả dụng (debug):")
-        st.write(available_models)
-    except Exception as e:
-        st.warning(f"Lỗi list models: {str(e)}")
-        
+
 # Sửa model name: Bỏ 'models/', dùng model mới
         model = genai.GenerativeModel("gemini-2.5-flash")  # Hoặc "gemini-2.5-flash-latest" nếu cần bản mới nhất
         
