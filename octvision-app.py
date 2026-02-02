@@ -2,53 +2,54 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Cấu hình giao diện
-st.set_page_config(page_title="OCT Analyzer - Hong Ha. MD", layout="centered")
-st.title("👁️ OCT Analyzer - Hong Ha. MD")
+st.set_page_config(page_title="GlaucoVision OCT Analyzer", layout="centered")
+st.title("🛠️ GlaucoVision OCT Analyzer")
 
-# 2. Lấy API Key từ Secrets
 api_key = st.secrets.get("GEMINI_API_KEY")
 if api_key:
-    try:
-        genai.configure(api_key=api_key)
-        
-        # Sửa model name: Bỏ 'models/', dùng model mới
-        model = genai.GenerativeModel("gemini-2.5-flash")  # Hoặc "gemini-2.5-flash-latest" nếu cần bản mới nhất
-        
-        uploaded_file = st.file_uploader("Chọn hình ảnh báo cáo...", type=["jpg", "jpeg", "png"])
-        if uploaded_file is not None:
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-1.5-flash-latest")  # Sửa thành alias latest để tránh 404
+
+    uploaded_files = st.file_uploader("Tải ảnh báo cáo OCT lên (Cirrus, Spectralis, Topcon, Avanti...)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+
+    if uploaded_files:
+        images = []
+        for uploaded_file in uploaded_files:
             image = Image.open(uploaded_file)
-            st.image(image, caption='Ảnh đã tải lên', use_container_width=True)
-            
-            if st.button("Phân tích báo cáo"):
-                with st.spinner('Đang phân tích dữ liệu...'):
-                    try:
+            images.append(image)
+            st.image(image, caption=f"Ảnh OCT: {uploaded_file.name}", use_container_width=True)
+
+        if st.button("🔍 Phân tích OCT"):
+            with st.spinner("Đang phân tích báo cáo OCT..."):
+                try:
                     prompt = """Bạn là chuyên gia nhãn khoa giàu kinh nghiệm. Hãy phân tích báo cáo OCT này một cách chi tiết, logic và có hệ thống:
+
                     1. **Trích xuất thông số chính** (đọc chính xác các con số):
                        - RNFL thickness (average + 4 quadrants)
                        - GCC / GCIPL thickness (average + sectors)
                        - ONH parameters (Cup/Disc ratio, Rim area, Disc area, Vertical CDR)
                        - Signal strength / Quality index
                        - Color coding (xanh/vàng/đỏ) ở các vùng quan trọng
+
                     2. **Chẩn đoán & Phân loại**:
                        - Có tổn thương glaucoma không? (thinning RNFL/GCC, asymmetry, focal loss)
                        - Nếu có, ước lượng mức độ: Mild / Moderate / Severe
                        - Các tổn thương khác (nếu có): AMD, DME, macular hole, ERM, vitreomacular traction, drusen, CSR, optic neuropathy, v.v.
+
                     3. **Tóm tắt ngắn gọn** (1-2 câu): Tình trạng chính là gì?
+
                     4. **Đề xuất**:
                        - Cận lâm sàng cần làm tiếp theo (VF, pachymetry, gonioscopy, fundus photo, FA, MRI...).
                        - Hướng điều trị / phác đồ gợi ý (theo giai đoạn nếu là glaucoma).
+
                     Lưu ý: Đây chỉ là hỗ trợ, không thay thế chẩn đoán bác sĩ.
                     """
-                        # Gọi generate_content với model mới
-                        response = model.generate_content([prompt, image])
-                        
-                        st.subheader("Kết quả phân tích:")
-                        st.markdown(response.text)
-                        st.markdown("OCT Analyzer - Hong Ha.MD")
-                    except Exception as e:
-                        st.error(f"Lỗi API: {e}")
-    except Exception as e:
-        st.error(f"Lỗi hệ thống: {e}")
+
+                    response = model.generate_content([prompt] + images)
+                    st.subheader("📋 Kết quả phân tích OCT")
+                    st.markdown(response.text)
+                    st.caption("App phân tích OCT - BSCK2 Lê Hồng Hà")
+                except Exception as e:
+                    st.error(f"Lỗi API: {str(e)}")
 else:
-    st.sidebar.warning("Vui lòng cấu hình GEMINI_API_KEY trong mục Secrets.")
+    st.warning("Vui lòng thêm GEMINI_API_KEY vào Secrets")
