@@ -2,41 +2,27 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-st.set_page_config(page_title="OCT Analyzer AI", layout="centered")
-st.title("🛠️ OCT Analyzer - Hong Ha. MD")
+# 1. Cấu hình giao diện
+st.set_page_config(page_title="OCT Analyzer - Hong Ha. MD", layout="centered")
+st.title("👁️ OCT Analyzer - Hong Ha. MD")
 
-# Debug: Kiểm tra nếu secrets có load OK
-st.write("**Debug: Secrets loaded?**", "GEMINI_API_KEY" in st.secrets)  # Nên hiển thị True nếu key có
-
+# 2. Lấy API Key từ Secrets
 api_key = st.secrets.get("GEMINI_API_KEY")
 if api_key:
-    genai.configure(api_key=api_key)
-    
-    # Debug: List models khả dụng để xem và chọn đúng
     try:
-        models = genai.list_models()
-        available_models = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
-        st.write("Models khả dụng (debug):")
-        st.write(available_models)
-    except Exception as e:
-        st.warning(f"Lỗi list models: {str(e)}")
-    
-    # Sửa model name: Dùng model phù hợp nhất từ debug (ở đây dùng 'gemini-1.5-pro' an toàn, thay nếu cần từ list)
-    model = genai.GenerativeModel("gemini-1.5-pro")  # Hoặc chọn từ available_models, ví dụ "gemini-1.5-flash-latest" nếu có
-    
-    # Gộp uploader thành multiple để linh hoạt (bỏ uploader đơn lẻ để tránh trùng lặp)
-    uploaded_files = st.file_uploader("Tải ảnh báo cáo OCT lên (Cirrus, Spectralis, Topcon, Avanti...)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
-    
-    if uploaded_files:
-        images = []
-        for uploaded_file in uploaded_files:
-            image = Image.open(uploaded_file)
-            images.append(image)
-            st.image(image, caption=f"Ảnh OCT: {uploaded_file.name}", use_container_width=True)
+        genai.configure(api_key=api_key)
         
-        if st.button("🔍 Phân tích OCT"):
-            with st.spinner("Đang phân tích báo cáo OCT..."):
-                try:
+        # Sửa model name: Bỏ 'models/', dùng model mới
+        model = genai.GenerativeModel("gemini-2.5-flash")  # Hoặc "gemini-2.5-flash-latest" nếu cần bản mới nhất
+        
+        uploaded_file = st.file_uploader("Chọn hình ảnh báo cáo...", type=["jpg", "jpeg", "png"])
+        if uploaded_file is not None:
+            image = Image.open(uploaded_file)
+            st.image(image, caption='Ảnh đã tải lên', use_container_width=True)
+            
+            if st.button("Phân tích báo cáo"):
+                with st.spinner('Đang phân tích dữ liệu...'):
+                    try:
                     prompt = """Bạn là chuyên gia nhãn khoa giàu kinh nghiệm. Hãy phân tích báo cáo OCT này một cách chi tiết, logic và có hệ thống:
                     1. **Trích xuất thông số chính** (đọc chính xác các con số):
                        - RNFL thickness (average + 4 quadrants)
