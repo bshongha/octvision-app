@@ -1,9 +1,9 @@
-import streamlit as st  # Import ở đầu tiên
+import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-st.set_page_config(page_title="GlaucoVision OCT Analyzer", layout="centered")
-st.title("🛠️ GlaucoVision OCT Analyzer")
+st.set_page_config(page_title="OCT Analyzer", layout="centered")
+st.title("🛠️ OCT Analyzer - Hong Ha. MD")
 
 # Debug: Kiểm tra nếu secrets có load OK
 st.write("**Debug: Secrets loaded?**", "GEMINI_API_KEY" in st.secrets)  # Nên hiển thị True nếu key có
@@ -21,7 +21,7 @@ if api_key:
     except Exception as e:
         st.warning(f"Lỗi list models: {str(e)}")
     
-    model = genai.GenerativeModel("gemini-1.5-flash")  # Giữ model này, hoặc thay từ list debug
+    model = genai.GenerativeModel("gemini-1.5-pro")  # Sử dụng model phù hợp nhất hỗ trợ generateContent và image analysis (thay vì flash để tránh lỗi 404)
     
     uploaded_files = st.file_uploader("Tải ảnh báo cáo OCT lên (Cirrus, Spectralis, Topcon, Avanti...)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
     
@@ -35,30 +35,23 @@ if api_key:
         if st.button("🔍 Phân tích OCT"):
             with st.spinner("Đang phân tích báo cáo OCT..."):
                 try:
-                    prompt = """Bạn là chuyên gia nhãn khoa với 20 năm kinh nghiệm, chuyên OCT glaucoma và võng mạc. Phân tích hình OCT đính kèm theo Chain of Thought (nghĩ từng bước):
-
-1. **Bước 1: Quan sát tổng quát**: Xác định loại scan (RNFL, GCC, Macula, Disc), chất lượng (signal strength ước tính nếu không có, artifact như blur/noise).
-
-2. **Bước 2: Trích xuất thông số chính**: Đọc chính xác từ hình nếu có số; nếu không, ước tính dựa trên hình thái (e.g., thickness ~300μm nếu thickening). Bao gồm:
-   - RNFL: Average + quadrants (μm, color: xanh bình thường, vàng borderline, đỏ bất thường).
-   - GCC/GCIPL: Average + sectors.
-   - ONH: C/D ratio, rim/disc area.
-   - Signal/Quality: Số hoặc ước tính.
-   - Color coding: Mô tả vùng xanh/vàng/đỏ/đen (fluid).
-
-3. **Bước 3: Phân tích chẩn đoán**: Lý do từng bước.
-   - Glaucoma: Thinning RNFL/GCC <5th percentile, asymmetry >10μm, focal loss – mức độ mild/moderate/severe dựa trên RNFL avg (>80/60-80/<60μm).
-   - Khác: CSR (SRF dome-shaped), CME (cystoid spaces), AMD (drusen/RPE irregularity), Macular hole (break layers), ERM (hyperreflective membrane), etc.
-
-4. **Bước 4: Tóm tắt ngắn gọn**: 1-2 câu chính.
-
-5. **Bước 5: Đề xuất**:
-   - Cận lâm sàng: VF cho glaucoma, FA cho CSR/AMD, MRI nếu nghi u.
-   - Phác đồ: Glaucoma – thuốc IOP (prostaglandin qhs); CSR – theo dõi/PDT; CME – anti-VEGF/steroid.
-
-Lưu ý: Nếu hình raw (không số), ước tính dựa trên hình thái học. Chỉ dựa vào hình, không đoán ngoài. Kết quả tham khảo, khám bác sĩ ngay.
-
-Output Markdown: Sử dụng headings cho từng bước, bullet cho thông số."""
+                    prompt = """Bạn là chuyên gia nhãn khoa giàu kinh nghiệm. Hãy phân tích báo cáo OCT này một cách chi tiết, logic và có hệ thống:
+                    1. **Trích xuất thông số chính** (đọc chính xác các con số):
+                       - RNFL thickness (average + 4 quadrants)
+                       - GCC / GCIPL thickness (average + sectors)
+                       - ONH parameters (Cup/Disc ratio, Rim area, Disc area, Vertical CDR)
+                       - Signal strength / Quality index
+                       - Color coding (xanh/vàng/đỏ) ở các vùng quan trọng
+                    2. **Chẩn đoán & Phân loại**:
+                       - Có tổn thương glaucoma không? (thinning RNFL/GCC, asymmetry, focal loss)
+                       - Nếu có, ước lượng mức độ: Mild / Moderate / Severe
+                       - Các tổn thương khác (nếu có): AMD, DME, macular hole, ERM, vitreomacular traction, drusen, CSR, optic neuropathy, v.v.
+                    3. **Tóm tắt ngắn gọn** (1-2 câu): Tình trạng chính là gì?
+                    4. **Đề xuất**:
+                       - Cận lâm sàng cần làm tiếp theo (VF, pachymetry, gonioscopy, fundus photo, FA, MRI...).
+                       - Hướng điều trị / phác đồ gợi ý (theo giai đoạn nếu là glaucoma).
+                    Lưu ý: Đây chỉ là hỗ trợ, không thay thế chẩn đoán bác sĩ.
+                    """
                     response = model.generate_content([prompt] + images)
                     st.subheader("📋 Kết quả phân tích OCT")
                     st.markdown(response.text)
