@@ -2,13 +2,23 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-st.set_page_config(page_title="GlaucoVision OCT Analyzer", layout="centered")
-st.title("🛠️ GlaucoVision OCT Analyzer")
+st.set_page_config(page_title="OCT Analyzer", layout="centered")
+st.title("🛠️ OCT Analyzer - Hong Ha . MD")
 
 api_key = st.secrets.get("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash-latest")  # Sửa thành alias latest để tránh 404
+    
+    # Debug: List models khả dụng để xem và chọn đúng
+    try:
+        models = genai.list_models()
+        available_models = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
+        st.write("Models khả dụng (debug):")
+        st.write(available_models)
+    except Exception as e:
+        st.warning(f"Lỗi list models: {str(e)}")
+    
+    model = genai.GenerativeModel("gemini-1.5-flash")  # Sửa thành model chuẩn, không -latest
 
     uploaded_files = st.file_uploader("Tải ảnh báo cáo OCT lên (Cirrus, Spectralis, Topcon, Avanti...)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
