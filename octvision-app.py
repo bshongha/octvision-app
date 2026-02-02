@@ -40,11 +40,15 @@ if api_key:
                        - Hướng điều trị / phác đồ gợi ý (theo giai đoạn nếu là glaucoma).
                     Lưu ý: Đây chỉ là hỗ trợ, không thay thế chẩn đoán bác sĩ.
                     """
-                    response = model.generate_content([prompt] + images)
-                    st.subheader("📋 Kết quả phân tích OCT")
-                    st.markdown(response.text)
-                    st.caption("App phân tích OCT - BSCK2 Lê Hồng Hà")
-                except Exception as e:
-                    st.error(f"Lỗi API: {str(e)}")
+                        # Gọi generate_content với model mới
+                        response = model.generate_content([prompt, image])
+                        
+                        st.subheader("Kết quả phân tích:")
+                        st.markdown(response.text)
+                        st.markdown("OCT Analyzer - Hong Ha.MD")
+                    except Exception as e:
+                        st.error(f"Lỗi API: {e}")
+    except Exception as e:
+        st.error(f"Lỗi hệ thống: {e}")
 else:
-    st.warning("Vui lòng thêm GEMINI_API_KEY vào Secrets")
+    st.sidebar.warning("Vui lòng cấu hình GEMINI_API_KEY trong mục Secrets.")
