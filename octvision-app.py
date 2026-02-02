@@ -12,7 +12,6 @@ api_key = st.secrets.get("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
     
-    # Debug: List models khả dụng để xem và chọn đúng
     try:
         models = genai.list_models()
         available_models = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
@@ -20,8 +19,14 @@ if api_key:
         st.write(available_models)
     except Exception as e:
         st.warning(f"Lỗi list models: {str(e)}")
-    
-    model = genai.GenerativeModel("gemini-1.5-pro")  # Sử dụng model phù hợp nhất hỗ trợ generateContent và image analysis (thay vì flash để tránh lỗi 404)
+        
+# Sửa model name: Bỏ 'models/', dùng model mới
+        model = genai.GenerativeModel("gemini-2.5-flash")  # Hoặc "gemini-2.5-flash-latest" nếu cần bản mới nhất
+        
+        uploaded_file = st.file_uploader("Chọn hình ảnh báo cáo...", type=["jpg", "jpeg", "png"])
+        if uploaded_file is not None:
+            image = Image.open(uploaded_file)
+            st.image(image, caption='Ảnh đã tải lên', use_container_width=True)
     
     uploaded_files = st.file_uploader("Tải ảnh báo cáo OCT lên (Cirrus, Spectralis, Topcon, Avanti...)", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
     
