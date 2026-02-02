@@ -2,8 +2,8 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-st.set_page_config(page_title="OCT Analyzer", layout="centered")
-st.title("🛠️ OCT Analyzer - Hong Ha . MD")
+st.set_page_config(page_title="GlaucoVision OCT Analyzer", layout="centered")
+st.title("🛠️ GlaucoVision OCT Analyzer")
 
 api_key = st.secrets.get("GEMINI_API_KEY")
 if api_key:
