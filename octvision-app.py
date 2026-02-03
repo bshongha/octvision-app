@@ -15,8 +15,8 @@ if api_key:
         genai.configure(api_key=api_key)
         
         # Sử dụng định danh model chuẩn
-        model = genai.GenerativeModel("gemini-1.5-flash")
-
+        model = genai.GenerativeModel("gemini-2.5-flash")  # Hoặc "gemini-2.5-flash-latest" nếu cần bản mới nhất
+        
         uploaded_files = st.file_uploader(
             "Tải ảnh báo cáo OCT (RNFL, GCC, Macula...)", 
             type=["jpg", "jpeg", "png"], 
